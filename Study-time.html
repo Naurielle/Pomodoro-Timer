@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Study Timer">
+    <link rel="manifest" href="./manifest.json">
+    <base href="./">
+    <title>Study Break Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .timer-display {
+            font-size: 4em;
+            font-weight: 200;
+            font-family: 'Courier New', monospace;
+            margin: 30px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .mode {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .main-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.4em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        .main-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.6);
+        }
+
+        .main-btn.studying {
+            background: #4ecdc4;
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
+        }
+
+        .main-btn.studying:hover {
+            box-shadow: 0 15px 40px rgba(78, 205, 196, 0.6);
+        }
+
+        .main-btn.breaking {
+            background: #ffe66d;
+            color: #333;
+            box-shadow: 0 10px 30px rgba(255, 230, 109, 0.4);
+        }
+
+        .main-btn.breaking:hover {
+            box-shadow: 0 15px 40px rgba(255, 230, 109, 0.6);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .reset-btn, .sound-input {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover, .sound-input:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .sound-input {
+            max-width: 200px;
+        }
+
+        .rules {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.85em;
+            line-height: 1.4;
+            opacity: 0.8;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 0.95em;
+            line-height: 1.4;
+            opacity: 0.85;
+            min-height: 24px;
+            transition: opacity 0.25s ease;
+        }
+
+        /* Popup Modal */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .popup.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .popup-content {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 30px 60px rgba(255, 107, 107, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .popup.show .popup-content {
+            transform: scale(1);
+        }
+
+        .popup h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        .popup p {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        .popup-btn {
+            background: white;
+            color: #ff6b6b;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .popup-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 480px) {
+            .timer-display {
+                font-size: 3em;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 30px 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-btn {
+                padding: 25px 50px;
+                font-size: 1.6em;
+            }
+            
+            .reset-btn, .sound-input {
+                padding: 15px 25px;
+                font-size: 1em;
+            }
+            
+            .popup-btn {
+                padding: 20px 40px;
+                font-size: 1.2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pomorodo Timer ni Nielpogi</h1>
+        <div class="mode" id="mode">Idle</div>
+        <div class="timer-display" id="timer">00:00:00</div>
+        
+        <button class="main-btn" id="mainBtn">Start Study</button>
+        
+        <div class="controls">
+            <input type="file" class="sound-input" id="soundInput" accept="audio/*">
+            <button class="reset-btn" id="resetBtn">Reset</button>
+        </div>
+        
+        <div class="rules">
+            &lt;30min: no break | 30–&lt;60min: 5 min | ≥60min: +5 min per 10 min after base 60
+        </div>
+        <div id="status" class="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Break End Popup -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <h2>⏰ Break Finished!</h2>
+            <p>Ready to study again?</p>
+            <button class="popup-btn" id="popupBtn">Back to Study</button>
+        </div>
+    </div>
+
+    <script>
+        class StudyBreakTimer {
+            constructor() {
+                this.state = 'idle';
+                this.studyTime = 0;
+                this.breakDuration = 0;
+                this.breakElapsed = 0;
+                this.breakStartTime = 0;
+                this.displayTime = '00:00:00';
+                this.audioContext = null;
+                this.customAudio = null;
+                this.isSoundPlaying = false;
+                this.beepInterval = null;
+                this.popup = document.getElementById('popup');
+                this.popupBtn = document.getElementById('popupBtn');
+                this.statusEl = document.getElementById('status');
+                this.deferredPrompt = null;
+                this.supportsNotification = 'Notification' in window;
+                this.supportsAudioContext = !!(window.AudioContext || window.webkitAudioContext);
+                this.supportsServiceWorker = 'serviceWorker' in navigator;
+
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.displaySupportWarnings();
+                this.registerServiceWorker();
+                this.updateDisplay();
+                this.updateButton();
+            }
+
+            bindEvents() {
+                const mainBtn = document.getElementById('mainBtn');
+                const resetBtn = document.getElementById('resetBtn');
+                const soundInput = document.getElementById('soundInput');
+
+                mainBtn.addEventListener('click', () => this.toggleMain());
+                resetBtn.addEventListener('click', () => this.reset());
+                soundInput.addEventListener('change', (e) => this.loadCustomSound(e.target.files[0]));
+
+                const resumeAudio = () => {
+                    this.prepareAudioContext();
+                };
+
+                document.addEventListener('pointerdown', resumeAudio, { once: true });
+                document.addEventListener('click', resumeAudio, { once: true });
+
+                this.popup.addEventListener('click', (e) => {
+                    if (e.target === this.popup || e.target === this.popupBtn) {
+                        this.handleBreakEndDismiss();
+                    }
+                });
+
+                window.addEventListener('beforeinstallprompt', (event) => {
+                    event.preventDefault();
+                    this.deferredPrompt = event;
+                    this.showStatus('Install this app from the browser menu.', false);
+                });
+            }
+
+            displaySupportWarnings() {
+                if (!this.supportsAudioContext) {
+                    this.showStatus('Audio alerts are not supported in this browser.', true);
+                }
+                if (!this.supportsNotification) {
+                    this.showStatus('Notifications are not supported in this browser.', true);
+                }
+            }
+
+            showStatus(message, isError = false) {
+                if (!this.statusEl) return;
+                this.statusEl.textContent = message;
+                this.statusEl.style.color = isError ? '#ffdddd' : '#d4ffd4';
+                this.statusEl.style.opacity = 1;
+            }
+
+            requestNotificationPermission() {
+                if (this.supportsNotification && Notification.permission === 'default') {
+                    Notification.requestPermission().catch(() => {
+                        this.showStatus('Notification permission request was blocked.', true);
+                    });
+                }
+            }
+
+            prepareAudioContext() {
+                if (!this.supportsAudioContext) {
+                    return;
+                }
+
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().catch(() => {
+                        this.showStatus('Unable to resume audio context.', true);
+                    });
+                }
+            }
+
+            registerServiceWorker() {
+                if (!this.supportsServiceWorker) {
+                    return;
+                }
+
+                const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (!isSecure) {
+                    return;
+                }
+
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered successfully:', registration);
+                        this.showStatus('Offline caching enabled.', false);
+                    })
+                    .catch((error) => {
+                        console.warn('Service Worker registration failed:', error);
+                        this.showStatus('Service Worker registration failed.', true);
+                    });
+            }
+
+            toggleMain() {
+                switch (this.state) {
+                    case 'idle':
+                    case 'breakEnded':
+                        this.startStudy();
+                        break;
+                    case 'studying':
+                        this.startBreak();
+                        break;
+                    case 'breaking':
+                        this.skipBreak();
+                        break;
+                }
+            }
+
+            startStudy() {
+                this.requestNotificationPermission();
+                this.prepareAudioContext();
+                this.state = 'studying';
+                this.studyTime = 0;
+                this.startTime = performance.now();
+                this.updateDisplay();
+                this.startTimerLoop();
+                this.updateButton();
+                this.showStatus('Study timer started.', false);
+            }
+
+            startBreak() {
+                this.studyTime = Math.floor((performance.now() - this.startTime) / 1000);
+                const studyMinutes = Math.floor(this.studyTime / 60);
+                let breakMinutes;
+
+                if (studyMinutes < 30) {
+                    breakMinutes = 0;
+                } else if (studyMinutes < 60) {
+                    breakMinutes = 5;
+                } else {
+                    breakMinutes = 10 + Math.floor((studyMinutes - 60) / 10) * 5;
+                }
+
+                this.breakDuration = Math.floor(breakMinutes * 60);
+                this.breakElapsed = 0;
+                this.breakStartTime = performance.now();
+                this.state = 'breaking';
+
+                this.showStatus(`Break started: ${breakMinutes} minute(s).`, false);
+                this.updateDisplay();
+                this.updateButton();
+            }
+
+            skipBreak() {
+                this.reset();
+            }
+
+            startTimerLoop() {
+                this.stopTimerLoop();
+                this.interval = setInterval(() => {
+                    const now = performance.now();
+
+                    if (this.state === 'studying') {
+                        const elapsed = Math.floor((now - this.startTime) / 1000);
+                        this.displayTime = this.formatTime(elapsed);
+                    } else if (this.state === 'breaking') {
+                        this.breakElapsed = Math.floor((now - this.breakStartTime) / 1000);
+                        const remaining = this.breakDuration - this.breakElapsed;
+
+                        if (remaining <= 0) {
+                            this.breakEnd();
+                            return;
+                        }
+
+                        this.displayTime = this.formatTime(remaining);
+                    }
+
+                    this.updateDisplay();
+                }, 100);
+            }
+
+            stopTimerLoop() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+            }
+
+            breakEnd() {
+                this.state = 'breakEnded';
+                this.stopTimerLoop();
+                this.playNotificationSound();
+                this.showNotification();
+                this.showPopup();
+                this.updateDisplay();
+                this.updateButton();
+                this.showStatus('Break finished! Tap to reset.', false);
+            }
+
+            handleBreakEndDismiss() {
+                this.stopNotificationSound();
+                this.hidePopup();
+                this.reset();
+            }
+
+            playNotificationSound() {
+                this.isSoundPlaying = true;
+                this.prepareAudioContext();
+
+                if (this.customAudio) {
+                    this.customAudio.currentTime = 0;
+                    this.customAudio.loop = true;
+                    this.customAudio.play().catch((e) => {
+                        console.warn('Audio play blocked, falling back to beep:', e);
+                        this.createDefaultBeep();
+                    });
+                } else {
+                    this.createDefaultBeep();
+                }
+            }
+
+            stopNotificationSound() {
+                this.isSoundPlaying = false;
+
+                if (this.customAudio) {
+                    this.customAudio.pause();
+                    this.customAudio.currentTime = 0;
+                }
+
+                if (this.beepInterval) {
+                    clearInterval(this.beepInterval);
+                    this.beepInterval = null;
+                }
+            }
+
+            createDefaultBeep() {
+                if (!this.supportsAudioContext) {
+                    this.showStatus('Audio not supported in this browser.', true);
+                    return;
+                }
+
+                this.prepareAudioContext();
+
+                if (!this.audioContext) {
+                    return;
+                }
+
+                const createBeep = () => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+
+                    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                    oscillator.type = 'sine';
+
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+
+                    oscillator.start();
+                    oscillator.stop(this.audioContext.currentTime + 0.5);
+                };
+
+                createBeep();
+                this.beepInterval = setInterval(() => {
+                    if (this.isSoundPlaying) {
+                        createBeep();
+                    }
+                }, 1500);
+            }
+
+            loadCustomSound(file) {
+                if (!file) {
+                    return;
+                }
+
+                if (this.customAudio) {
+                    URL.revokeObjectURL(this.customAudio.src);
+                }
+
+                this.customAudio = new Audio(URL.createObjectURL(file));
+                this.showStatus('Custom alarm loaded.', false);
+            }
+
+            showNotification() {
+                if (this.supportsNotification && Notification.permission === 'granted') {
+                    new Notification('Break Finished!', {
+                        body: 'Time to get back to studying!'
+                    });
+                }
+            }
+
+            showPopup() {
+                this.popup.classList.add('show');
+            }
+
+            hidePopup() {
+                this.popup.classList.remove('show');
+            }
+
+            updateDisplay() {
+                const modeEl = document.getElementById('mode');
+                const timerEl = document.getElementById('timer');
+
+                let modeText = '';
+                switch (this.state) {
+                    case 'idle':
+                    case 'breakEnded':
+                        modeText = 'Idle';
+                        break;
+                    case 'studying':
+                        modeText = 'Studying';
+                        break;
+                    case 'breaking':
+                        modeText = 'Break';
+                        break;
+                }
+
+                modeEl.textContent = modeText;
+                timerEl.textContent = this.displayTime;
+            }
+
+            updateButton() {
+                const btn = document.getElementById('mainBtn');
+                btn.className = 'main-btn';
+
+                switch (this.state) {
+                    case 'idle':
+                    case 'breakEnded':
+                        btn.textContent = 'Start Study';
+                        break;
+                    case 'studying':
+                        btn.textContent = 'Take Break';
+                        btn.classList.add('studying');
+                        break;
+                    case 'breaking':
+                        btn.textContent = 'Skip Break';
+                        btn.classList.add('breaking');
+                        break;
+                }
+            }
+
+            formatTime(seconds) {
+                const hrs = Math.floor(Math.abs(seconds) / 3600);
+                const mins = Math.floor((Math.abs(seconds) % 3600) / 60);
+                const secs = Math.abs(seconds) % 60;
+                return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            reset() {
+                this.state = 'idle';
+                this.studyTime = 0;
+                this.breakDuration = 0;
+                this.breakElapsed = 0;
+                this.stopTimerLoop();
+                this.stopNotificationSound();
+                this.hidePopup();
+                this.displayTime = '00:00:00';
+                this.updateDisplay();
+                this.updateButton();
+                this.showStatus('Reset complete.', false);
+            }
+        }
+
+        window.studyTimer = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.studyTimer = new StudyBreakTimer();
+        });
+    </script>
+</body>
+</html>
+    
