@@ -181,16 +181,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
-            will-change: transform;
-            overflow-y: auto;
+            z-index: 1000;
             opacity: 0;
             pointer-events: none;
             transition: all 0.3s ease;
         }
 
         .popup.show {
-            display: flex;
             opacity: 1;
             pointer-events: auto;
         }
@@ -203,12 +200,12 @@
             max-width: 400px;
             width: 90%;
             box-shadow: 0 30px 60px rgba(255, 107, 107, 0.5);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
         }
 
         .popup.show .popup-content {
-            opacity: 1;
+            transform: scale(1);
         }
 
         .popup h2 {
@@ -643,10 +640,6 @@
             }
 
             showPopup() {
-                this.elements.popup.style.visibility = 'visible';
-                this.elements.popup.style.opacity = '1';
-                this.elements.popup.style.pointerEvents = 'auto';
-                this.elements.popup.style.display = 'flex';
                 this.elements.popup.classList.add('show');
             }
 
